@@ -87,7 +87,6 @@ FetchContent_Declare(rang
 set(_old_skip ${CMAKE_SKIP_INSTALL_RULES})
 set(CMAKE_SKIP_INSTALL_RULES ON)
 FetchContent_Populate(cxxopts)
-add_subdirectory(${fmi4c_SOURCE_DIR} ${fmi4c_BINARY_DIR} EXCLUDE_FROM_ALL)
 FetchContent_Populate(json)
 add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
 FetchContent_Populate(rang)

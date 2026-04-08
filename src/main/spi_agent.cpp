@@ -184,13 +184,13 @@ int main(int argc, char *const *argv) {
         rx.speed_hz = 1000000;
         rx.bits_per_word = 8;
 
-        if (ioctl(this -> _spi, SPI_IOC_MESSAGE(1), &rx) < 1) {
+        if (ioctl(_spi, SPI_IOC_MESSAGE(1), &rx) < 1) {
           cerr << "ERROR: failed packet reception" << endl;
         }
 
         uint8_t checksum = 0;
         uint8_t* ptr = (uint8_t*)&fb;
-        for(size_t i = 0; i < sizeof(Pack_fb) - 1; i++) {
+        for(size_t i = 0; i < sizeof(PackFb) - 1; i++) {
           checksum ^= ptr[i];
         }
 
