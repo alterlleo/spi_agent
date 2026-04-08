@@ -45,6 +45,19 @@ using namespace Mads;
   }; // tot byte dimension: 1 + 6*4 + 1 = 26
 #pragma pack(pop)
 
+#pragma pack(push, 1)
+struct __attribute__((packed)) PackFb {
+    uint8_t  start;
+    uint32_t msg_id;
+    float    x;
+    float    y;
+    float    z;
+    float    error;
+    uint8_t  check;
+};
+#pragma pack(pop)
+// Totale: 18 byte fissi
+
 int main(int argc, char *const *argv) {
   // Mads-related
   string settings_uri = SETTINGS_URI;
@@ -145,8 +158,11 @@ int main(int argc, char *const *argv) {
   json status;
   array<string, 3> console_out;
 
-  Pack pkt;
+  Pack pkt = {};
+  PackFb fb = {};
   pkt.start = 0xAA;
+  fb.start = 0xBB;
+  uint32_t last_id = 0;
 
   agent.loop(
       [&]() -> chrono::milliseconds {
@@ -157,6 +173,44 @@ int main(int argc, char *const *argv) {
              1e6;
         last_timestep = now;
         t += dt;
+
+        // read from SPI
+        vector<uint8_t> dummy_tx(sizeof(PackFb), 0);
+
+        struct spi_ioc_transfer rx = {};
+        rx.tx_buf = (unsigned long)dummy_tx.data();
+        rx.rx_buf = (unsigned long)&fb;
+        rx.len = sizeof(PackFb);
+        rx.speed_hz = 1000000;
+        rx.bits_per_word = 8;
+
+        if (ioctl(this -> _spi, SPI_IOC_MESSAGE(1), &rx) < 1) {
+          cerr << "ERROR: failed packet reception" << endl;
+        }
+
+        uint8_t checksum = 0;
+        uint8_t* ptr = (uint8_t*)&fb;
+        for(size_t i = 0; i < sizeof(Pack_fb) - 1; i++) {
+          checksum ^= ptr[i];
+        }
+
+        if (fb.start != 0xBB || fb.check != checksum) {
+          cerr << "ERROR: wrong checksum" << endl;
+        } else{
+
+          if(fb.msg_id > last_id){
+            
+            // new data
+            last_id = fb.msg_id;
+            status["xf"] = fb.x;
+            status["yf"] = fb.y;
+            status["zf"] = fb.z;
+            status["e"] = fb.error;
+
+            agent.publish(status);
+          }
+        }
+
         // input
         if (agent.receive(true) == message_type::json &&
             agent.last_topic() != "control") {
@@ -209,10 +263,7 @@ int main(int argc, char *const *argv) {
       integrate:
         // Integrate
         console_out[2] = to_string(t) + " s";
-        auto tet = chrono::steady_clock::now() - now;
-        status["TET"] = chrono::duration_cast<chrono::microseconds>(tet).count();
-        // output
-        agent.publish(status);
+
         cout << goback(3) << fg::yellow
              << "Last message: " << console_out[0] << fg::reset << endl
              << "Received: " << console_out[1] << endl
