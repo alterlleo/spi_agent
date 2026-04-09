@@ -2,7 +2,7 @@
 
 This repository Produces a monolithic [MADS](https://github.com/pbosetti/mads) agent that can interface with the SPI peripheral of a Raspberry Pi.
 
-> **NOTE: ** It can be used just on Raspberry Pi, since a classic Linux computer does not provide a SPI interface.
+> **NOTE:** It can be used just on Raspberry Pi, since a classic Linux computer does not provide a SPI interface.
 > Simulator for PCs is still work in progress.
 
 
