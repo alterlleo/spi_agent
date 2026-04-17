@@ -213,7 +213,7 @@ int main(int argc, char *const *argv) {
 
         // input
         if (agent.receive(true) == message_type::json &&
-            agent.last_topic() != "control") {
+            agent.last_topic() != "setpoint") {
           auto msg = agent.last_message();
           auto in = json::parse(get<1>(msg));
 
