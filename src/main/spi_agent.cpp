@@ -202,10 +202,10 @@ int main(int argc, char *const *argv) {
             
             // new data
             last_id = fb.msg_id;
-            status["xf"] = fb.x;
-            status["yf"] = fb.y;
-            status["zf"] = fb.z;
-            status["e"] = fb.error;
+            status["x"] = fb.x;
+            status["y"] = fb.y;
+            status["z"] = fb.z;
+            status["error"] = fb.error;
 
             agent.publish(status);
           }
