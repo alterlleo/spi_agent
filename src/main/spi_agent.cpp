@@ -38,11 +38,12 @@ using namespace Mads;
     float x;
     float y;
     float z;
-    float pitch;
-    float yaw;
-    float feedrate;
+    float a;
+    float c;
+    float vx;
+    float vy;
     uint8_t check;
-  }; // tot byte dimension: 1 + 6*4 + 1 = 26
+  }; // tot byte dimension: 1 + 7*4 + 1 = 30
 #pragma pack(pop)
 
 #pragma pack(push, 1)
@@ -202,9 +203,9 @@ int main(int argc, char *const *argv) {
             
             // new data
             last_id = fb.msg_id;
-            status["x"] = fb.x;
-            status["y"] = fb.y;
-            status["z"] = fb.z;
+            status["xf"] = fb.x;
+            status["yf"] = fb.y;
+            status["zf"] = fb.z;
             status["error"] = fb.error;
 
             agent.publish(status);
@@ -231,9 +232,10 @@ int main(int argc, char *const *argv) {
               pkt.x = v.value("x", 0.0f);
               pkt.y = v.value("y", 0.0f);
               pkt.z = v.value("z", 0.0f);
-              pkt.pitch = v.value("pitch", 0.0f);
-              pkt.yaw = v.value("yaw", 0.0f);
-              pkt.feedrate = v.value("feedrate", 0.0f);
+              pkt.pitch = v.value("a", 0.0f);
+              pkt.yaw = v.value("c", 0.0f);
+              pkt.vx = v.value("vx", 0.0f);
+              pkt.vy = v.value("vy", 0.0f);
 
               // checksum
               uint8_t* ptr = (uint8_t*)&pkt;
