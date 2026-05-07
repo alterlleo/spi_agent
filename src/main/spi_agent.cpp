@@ -232,10 +232,15 @@ int main(int argc, char *const *argv) {
               pkt.x = v.value("x", 0.0f);
               pkt.y = v.value("y", 0.0f);
               pkt.z = v.value("z", 0.0f);
-              pkt.pitch = v.value("a", 0.0f);
-              pkt.yaw = v.value("c", 0.0f);
+              pkt.a = v.value("a", 0.0f);
+              pkt.c = v.value("c", 0.0f);
               pkt.vx = v.value("vx", 0.0f);
               pkt.vy = v.value("vy", 0.0f);
+
+              if(pkt.x == 0.0f && pkt.y == 0.0f && pkt.z == 0.0f && pkt.a == 0.0f && pkt.c == 0.0f){
+                // homing procedure
+                pkt.start = 0xCC;
+              }
 
               // checksum
               uint8_t* ptr = (uint8_t*)&pkt;
