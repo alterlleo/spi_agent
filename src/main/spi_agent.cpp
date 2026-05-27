@@ -53,11 +53,18 @@ struct __attribute__((packed)) PackFb {
     float    x;
     float    y;
     float    z;
+    float    a;
+    float    c;
     float    error;
     uint8_t  check;
 };
 #pragma pack(pop)
-// Totale: 18 byte fissi
+// Totale: 1+4+6*4+1 = 30 byte fissi
+
+struct __attribute__((packed)) SPIFrame{
+  Pack tx;
+  PackFb rx;
+};
 
 int main(int argc, char *const *argv) {
   // Mads-related
@@ -175,45 +182,8 @@ int main(int argc, char *const *argv) {
         last_timestep = now;
         t += dt;
 
-        // read from SPI
-        vector<uint8_t> dummy_tx(sizeof(PackFb), 0);
-
-        struct spi_ioc_transfer rx = {};
-        rx.tx_buf = (unsigned long)dummy_tx.data();
-        rx.rx_buf = (unsigned long)&fb;
-        rx.len = sizeof(PackFb);
-        rx.speed_hz = 1000000;
-        rx.bits_per_word = 8;
-
-        if (ioctl(_spi, SPI_IOC_MESSAGE(1), &rx) < 1) {
-          cerr << "ERROR: failed packet reception" << endl;
-        }
-
-        uint8_t checksum = 0;
-        uint8_t* ptr = (uint8_t*)&fb;
-        for(size_t i = 0; i < sizeof(PackFb) - 1; i++) {
-          checksum ^= ptr[i];
-        }
-
-        if (fb.start != 0xBB || fb.check != checksum) {
-          cerr << "ERROR: wrong checksum" << endl;
-        } else{
-
-          if(fb.msg_id > last_id){
-            
-            // new data
-            last_id = fb.msg_id;
-            status["xf"] = fb.x;
-            status["yf"] = fb.y;
-            status["zf"] = fb.z;
-            status["error"] = fb.error;
-
-            agent.publish(status);
-          }
-        }
-
-        // input
-        if (agent.receive(true) == message_type::json &&
+        // MADS -> SPI
+        if (agent.receive(false) == message_type::json &&
             agent.last_topic() != "setpoint") {
           auto msg = agent.last_message();
           auto in = json::parse(get<1>(msg));
@@ -221,7 +191,6 @@ int main(int argc, char *const *argv) {
           if (!in["machine"].is_object()) {
             t_msg = t;
             console_out[0] = to_string(t_msg) + " s, Missing /machine/";
-            goto integrate;
           }
 
           t_in = t;
@@ -250,32 +219,66 @@ int main(int argc, char *const *argv) {
               }
               pkt.check = checksum;
 
-              // transmit
-              struct spi_ioc_transfer tx = {};
-              tx.tx_buf = (unsigned long)&pkt;
-              tx.len = sizeof(pkt);
-              tx.speed_hz = 1000000;
-              tx.bits_per_word = 8;
-
-              if (ioctl(_spi, SPI_IOC_MESSAGE(1), &tx) < 1) {
-                cerr << "ERROR: failed packet transmission" << endl;
-              }
-
             }  else {
               console_out[1] = " (skipped, not a number or array)";
             }
           }
         }
 
-      integrate:
-        // Integrate
-        console_out[2] = to_string(t) + " s";
+        /*
+          _____      _ _   ____              _             ____  ____ ___ 
+         |  ___|   _| | | |  _ \ _   _ _ __ | | _____  __ / ___||  _ \_ _|
+         | |_ | | | | | | | | | | | | | '_ \| |/ _ \ \/ / \___ \| |_) | | 
+         |  _|| |_| | | | | |_| | |_| | |_) | |  __/>  <   ___) |  __/| | 
+         |_|   \__,_|_|_| |____/ \__,_| .__/|_|\___/_/\_\ |____/|_|  |___|
+                                      |_|                                 
+        */
 
-        cout << goback(3) << fg::yellow
-             << "Last message: " << console_out[0] << fg::reset << endl
-             << "Received: " << console_out[1] << endl
-             << "Status update after: " << console_out[2] << endl;
+        SPIFrame frame = {};
+        frame.tx = pkt;
+
+        struct spi_ioc_transfer tr = {};
+        tr.tx_buf = (unsigned long)&frame.tx;
+        tr.rx_buf = (unsigned long)&frame.rx;
+        tr.len = sizeof(SPIFrame);
+        tr.speed_hz = 1000000;
+        tr.bits_per_word = 8;
+
+        if(ioctl(_spi, SPI_IOC_MESSAGE(1), &tr) < 1){
+          cerr << "SPI Communication error" << endl;
+        }
+
+        // SPI -> MADS
+
+        fb = frame.rx;
+
+        uint8_t checksum = 0;
+        uint8_t* ptr = (uint8_t*)&fb;
+        for(size_t i = 0; i < sizeof(PackFb) - 1; i++) {
+          checksum ^= ptr[i];
+        }
+
+        if (fb.start != 0xBB || fb.check != checksum) {
+          cerr << "ERROR: wrong checksum" << endl;
+        } else{
+
+          if(fb.msg_id > last_id){
+            
+            // new data
+            last_id = fb.msg_id;
+            status["xf"] = fb.x;
+            status["yf"] = fb.y;
+            status["zf"] = fb.z;
+            status["af"] = fb.a;
+            status["cf"] = fb.c;
+            status["error"] = fb.error;
+
+            agent.publish(status);
+          }
+        }
+
         return 0ms;
+
       },
       period);
 
