@@ -126,27 +126,6 @@ int main(int argc, char *const *argv) {
   agent.register_event(event_type::startup);
   agent.info();
 
-  /*
-  if (settings.contains("parameters")) {
-    cout << style::bold << "Overriding default FMU parameters (" 
-         << settings["parameters"].size() << ") from settings:" 
-         << style::reset << endl;
-    int i = 0;
-    for (auto const &[param, value] : settings["parameters"].items()) {
-      cout << "  " << param << ": " << style::bold << value 
-           << style::reset;
-      if (!value.is_number()) {
-        cout << fg::red << "  NOT A NUMBER, SKIPPING" << fg::reset;
-      } else {
-        plant.set_real(param, value.get<double>());
-      }
-      cout << endl;
-      i++;
-    }
-    cout << "  " << i << " parameters overridden\n\n\n" << endl;
-  }
-  */
-
   // SPI bus openining
   _spi = open("/dev/spidev0.0", O_RDWR);
   if(_spi < 0){
