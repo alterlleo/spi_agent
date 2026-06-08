@@ -245,12 +245,12 @@ int main(int argc, char *const *argv) {
             
             // new data
             last_id = fb.msg_id;
-            status["xf"] = fb.x;
-            status["yf"] = fb.y;
-            status["zf"] = fb.z;
-            status["af"] = fb.a;
-            status["cf"] = fb.c;
-            status["error"] = fb.error;
+            status["xf"] = (float)(fb.x);
+            status["yf"] = (float)(fb.y);
+            status["zf"] = (float)(fb.z);
+            status["af"] = (float)(fb.a);
+            status["cf"] = (float)(fb.c);
+            status["error"] = (float)(fb.error);
 
             agent.publish(status);
           }
