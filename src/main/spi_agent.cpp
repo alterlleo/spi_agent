@@ -43,7 +43,8 @@ using namespace Mads;
     float vx;
     float vy;
     uint8_t check;
-  }; // tot byte dimension: 1 + 7*4 + 1 = 30
+    uint8_t padding[2];
+  }; // tot byte dimension: 1 + 7*4 + 1 + 2 = 32
 #pragma pack(pop)
 
 #pragma pack(push, 1)
@@ -57,9 +58,10 @@ struct __attribute__((packed)) PackFb {
     float    c;
     float    error;
     uint8_t  check;
+    uint8_t padding[2];
 };
 #pragma pack(pop)
-// Totale: 1+4+6*4+1 = 30 byte fissi
+// Totale: 1+4+6*4+1+2 = 32 byte fissi
 
 struct __attribute__((packed)) SPIFrame{
   Pack tx;
