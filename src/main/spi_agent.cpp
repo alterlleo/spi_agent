@@ -216,20 +216,22 @@ int main(int argc, char *const *argv) {
         SPIFrame frame = {};
         frame.tx = pkt;
 
-        struct spi_ioc_transfer tr = {};
-        tr.tx_buf = (unsigned long)&frame.tx;
-        tr.rx_buf = (unsigned long)&frame.rx;
-        tr.len = sizeof(SPIFrame);
-        tr.speed_hz = 1000000;
-        tr.bits_per_word = 8;
+        struct spi_ioc_transfer tr[2] = {};
+        tr[0].tx_buf = (unsigned long)&pkt;
+        tr[0].len = sizeof(Pack);
+        tr[0].speed_hz = 1000000;
+        tr[0].bits_per_word = 8;
+        
+        // rx
+        tr[1].rx_buf = (unsigned long)&fb;
+        tr[1].len = sizeof(PackFb);
+        tr[1].speed_hz = 1000000;
+        tr[1].bits_per_word = 8;
 
-        if(ioctl(_spi, SPI_IOC_MESSAGE(1), &tr) < 1){
-          cerr << "SPI Communication error" << endl;
+        // 30 byte
+        if(ioctl(_spi, SPI_IOC_MESSAGE(2), tr) < 0){
+          perror("SPI Communication error");
         }
-
-        // SPI -> MADS
-
-        fb = frame.rx;
 
         uint8_t checksum = 0;
         uint8_t* ptr = (uint8_t*)&fb;
