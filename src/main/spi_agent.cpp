@@ -226,27 +226,29 @@ int main(int argc, char *const *argv) {
         }
         pkt.check = checksum_tx;
 
-        struct spi_ioc_transfer tr = {};
+        struct spi_ioc_transfer tr;
+        memset(&tr, 0, sizeof(tr));
         tr.tx_buf = (unsigned long)&pkt;
         tr.rx_buf = (unsigned long)&fb;
         tr.len = sizeof(Pack);
         tr.speed_hz = 1000000;
         tr.bits_per_word = 8;
-
-        // 32 byte
-        if(ioctl(_spi, SPI_IOC_MESSAGE(2), tr) < 0){
-          perror("SPI Communication error");
+        
+        if(ioctl(_spi, SPI_IOC_MESSAGE(1), &tr) < 0){
+            fprintf(stderr, "SPI Communication error. Attempted length: %d\n", tr.len);
+            perror("System Error");
         }
 
+        // SPI -> MADS
         uint8_t checksum_rx = 0;
         uint8_t* ptr_rx = (uint8_t*)&fb;
-        for(size_t i = 0; i < sizeof(PackFb) - 1; i++) {
+        for(size_t i = 0; i < offsetof(PackFb, check); i++) {
           checksum_rx ^= ptr_rx[i];
         }
 
         if (fb.start != 0xBB || fb.check != checksum_rx) {
-          cerr << "ERROR: wrong checksum" << endl;
-        } else{
+          cerr << "ERROR: wrong checksum. Start: 0x" << hex << (int)fb.start << dec << endl;
+        } else {
 
           if(fb.msg_id > last_id){
             
