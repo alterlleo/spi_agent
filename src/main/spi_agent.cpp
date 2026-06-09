@@ -178,7 +178,7 @@ int main(int argc, char *const *argv) {
           t_in = t;
           console_out[1] = to_string(t_in) + " s, " + in["machine"].dump();
           for (auto const &[k, v] : in["machine"].items()) {
-            if (v.is_array()) {
+            if (v.is_object()) {
 
               pkt.x = v.value("x", 0.0f);
               pkt.y = v.value("y", 0.0f);
@@ -189,17 +189,18 @@ int main(int argc, char *const *argv) {
               pkt.vy = v.value("vy", 0.0f);
 
               if(pkt.x == 0.0f && pkt.y == 0.0f && pkt.z == 0.0f && pkt.a == 0.0f && pkt.c == 0.0f){
-                // homing procedure
                 pkt.start = 0xCC;
+              } else {
+                pkt.start = 0xAA;
               }
 
               // checksum
-              uint8_t* ptr = (uint8_t*)&pkt;
-              uint8_t checksum = 0;
-              for(size_t i = 0; i < sizeof(Pack) - 1; i++) {
-                checksum ^= ptr[i];
+              uint8_t checksum_tx = 0;
+              uint8_t* ptr_tx = (uint8_t*)&pkt;
+              for(size_t i = 0; i < offsetof(Pack, check); i++) {
+                  checksum_tx ^= ptr_tx[i];
               }
-              pkt.check = checksum;
+              pkt.check = checksum_tx;
 
             }  else {
               console_out[1] = " (skipped, not a number or array)";
