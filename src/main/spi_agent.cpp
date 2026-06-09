@@ -247,7 +247,9 @@ int main(int argc, char *const *argv) {
         }
 
         if (fb.start != 0xBB || fb.check != checksum_rx) {
-          cerr << "ERROR: wrong checksum. Start: 0x" << hex << (int)fb.start << dec << endl;
+            cerr << "ERROR! Calc_Check: 0x" << hex << (int)checksum_rx 
+                 << " | Recv_Check: 0x" << (int)fb.check 
+                 << " | Start: 0x" << (int)fb.start << dec << endl;
         } else {
 
           if(fb.msg_id > last_id){
