@@ -24,6 +24,7 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stddef.h>
 
 using namespace std;
 using namespace chrono_literals;
@@ -218,30 +219,32 @@ int main(int argc, char *const *argv) {
         SPIFrame frame = {};
         frame.tx = pkt;
 
-        struct spi_ioc_transfer tr[2] = {};
-        tr[0].tx_buf = (unsigned long)&pkt;
-        tr[0].len = sizeof(Pack);
-        tr[0].speed_hz = 1000000;
-        tr[0].bits_per_word = 8;
-        
-        // rx
-        tr[1].rx_buf = (unsigned long)&fb;
-        tr[1].len = sizeof(PackFb);
-        tr[1].speed_hz = 1000000;
-        tr[1].bits_per_word = 8;
+        uint8_t checksum_tx = 0;
+        uint8_t* ptr_tx = (uint8_t*)&pkt;
+        for(size_t i = 0; i < offsetof(Pack, check); i++) {
+            checksum_tx ^= ptr_tx[i];
+        }
+        pkt.check = checksum_tx;
 
-        // 30 byte
+        struct spi_ioc_transfer tr = {};
+        tr.tx_buf = (unsigned long)&pkt;
+        tr.rx_buf = (unsigned long)&fb;
+        tr.len = sizeof(Pack);
+        tr.speed_hz = 1000000;
+        tr.bits_per_word = 8;
+
+        // 32 byte
         if(ioctl(_spi, SPI_IOC_MESSAGE(2), tr) < 0){
           perror("SPI Communication error");
         }
 
-        uint8_t checksum = 0;
-        uint8_t* ptr = (uint8_t*)&fb;
+        uint8_t checksum_rx = 0;
+        uint8_t* ptr_rx = (uint8_t*)&fb;
         for(size_t i = 0; i < sizeof(PackFb) - 1; i++) {
-          checksum ^= ptr[i];
+          checksum_rx ^= ptr_rx[i];
         }
 
-        if (fb.start != 0xBB || fb.check != checksum) {
+        if (fb.start != 0xBB || fb.check != checksum_rx) {
           cerr << "ERROR: wrong checksum" << endl;
         } else{
 
