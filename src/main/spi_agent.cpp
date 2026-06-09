@@ -165,46 +165,37 @@ int main(int argc, char *const *argv) {
         t += dt;
 
         // MADS -> SPI
-        if (agent.receive(false) == message_type::json &&
-            agent.last_topic() != "setpoint") {
+        if (agent.receive(false) == message_type::json && agent.last_topic() == "setpoint") {
+          
           auto msg = agent.last_message();
           auto in = json::parse(get<1>(msg));
 
-          if (!in["machine"].is_object()) {
-            t_msg = t;
-            console_out[0] = to_string(t_msg) + " s, Missing /machine/";
-          }
+          if (in.contains("fmu_input") && in["fmu_input"].is_object()) {
+            auto fmu = in["fmu_input"];
+            
+            pkt.x = fmu.value("x", 0.0f);
+            pkt.y = fmu.value("y", 0.0f);
+            pkt.z = fmu.value("z", 0.0f);
+            pkt.a = fmu.value("a", 0.0f);
+            pkt.c = fmu.value("c", 0.0f);
+            pkt.vx = fmu.value("vx", 0.0f);
+            pkt.vy = fmu.value("vy", 0.0f);
 
-          t_in = t;
-          console_out[1] = to_string(t_in) + " s, " + in["machine"].dump();
-          for (auto const &[k, v] : in["machine"].items()) {
-            if (v.is_object()) {
-
-              pkt.x = v.value("x", 0.0f);
-              pkt.y = v.value("y", 0.0f);
-              pkt.z = v.value("z", 0.0f);
-              pkt.a = v.value("a", 0.0f);
-              pkt.c = v.value("c", 0.0f);
-              pkt.vx = v.value("vx", 0.0f);
-              pkt.vy = v.value("vy", 0.0f);
-
-              if(pkt.x == 0.0f && pkt.y == 0.0f && pkt.z == 0.0f && pkt.a == 0.0f && pkt.c == 0.0f){
-                pkt.start = 0xCC;
-              } else {
-                pkt.start = 0xAA;
-              }
-
-              // checksum
-              uint8_t checksum_tx = 0;
-              uint8_t* ptr_tx = (uint8_t*)&pkt;
-              for(size_t i = 0; i < offsetof(Pack, check); i++) {
-                  checksum_tx ^= ptr_tx[i];
-              }
-              pkt.check = checksum_tx;
-
-            }  else {
-              console_out[1] = " (skipped, not a number or array)";
+            if(pkt.x == 0.0f && pkt.y == 0.0f && pkt.z == 0.0f && pkt.a == 0.0f && pkt.c == 0.0f){
+              pkt.start = 0xCC;
+            } else {
+              pkt.start = 0xAA;
             }
+
+            uint8_t checksum_tx = 0;
+            uint8_t* ptr_tx = (uint8_t*)&pkt;
+            for(size_t i = 0; i < offsetof(Pack, check); i++) {
+                checksum_tx ^= ptr_tx[i];
+            }
+            pkt.check = checksum_tx;
+
+          } else {
+            console_out[0] = to_string(t) + " s, Missing /fmu_input/";
           }
         }
 
