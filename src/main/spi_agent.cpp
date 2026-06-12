@@ -158,7 +158,7 @@ int main(int argc, char *const *argv) {
 
   uint8_t mode = SPI_MODE_0;
   ioctl(_spi, SPI_IOC_WR_MODE, &mode);
-  uint32_t speed = 1000000;
+  uint32_t speed = 5000000;
   ioctl(_spi, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
 
   // loop
