@@ -26,6 +26,9 @@
 #include <unistd.h>
 #include <stddef.h>
 
+// RT
+#include <sched.h>
+
 using namespace std;
 using namespace chrono_literals;
 using namespace cxxopts;
@@ -44,7 +47,7 @@ using namespace Mads;
     float vx;
     float vy;
     uint8_t check;
-    uint8_t padding[2];
+    uint8_t padding[66];
   }; // tot byte dimension: 1 + 7*4 + 1 + 2 = 32
 #pragma pack(pop)
 
@@ -57,12 +60,21 @@ struct __attribute__((packed)) PackFb {
     float    z;
     float    a;
     float    c;
+    float    vx;
+    float    vy;
+    float    vz;
+    float    va;
+    float    vc;
+    float    ax;
+    float    ay;
+    float    az;
+    float    aa;
+    float    ac;
     float    error;
     uint8_t  check;
-    uint8_t padding[2];
+    uint8_t padding[26];
 };
 #pragma pack(pop)
-// Totale: 1+4+6*4+1+2 = 32 byte fissi
 
 struct __attribute__((packed)) SPIFrame{
   Pack tx;
@@ -82,6 +94,14 @@ int main(int argc, char *const *argv) {
 
   // SPI-related
   int _spi = -1;
+
+  // RT
+  struct sched_param sp;
+  memset(&sp, 0, sizeof(sp));
+  sp.sched_priority = 98;
+  if (sched_setscheduler(0, SCHED_FIFO, &sp) == -1) {
+      cerr << fg::yellow << "Warning: Failed to set SCHED_FIFO. Run as root for Real-Time performance." << fg::reset << endl;
+  }
 
   // Parse command line options ================================================
   Options options(argv[0]);
@@ -211,13 +231,6 @@ int main(int argc, char *const *argv) {
         SPIFrame frame = {};
         frame.tx = pkt;
 
-        uint8_t checksum_tx = 0;
-        uint8_t* ptr_tx = (uint8_t*)&pkt;
-        for(size_t i = 0; i < offsetof(Pack, check); i++) {
-            checksum_tx ^= ptr_tx[i];
-        }
-        pkt.check = checksum_tx;
-
         struct spi_ioc_transfer tr;
         memset(&tr, 0, sizeof(tr));
         tr.tx_buf = (unsigned long)&pkt;
@@ -253,6 +266,16 @@ int main(int argc, char *const *argv) {
             status["zf"] = (float)(fb.z);
             status["af"] = (float)(fb.a);
             status["cf"] = (float)(fb.c);
+            status["vxf"] = (float)(fb.vx);
+            status["vyf"] = (float)(fb.vy);
+            status["vzf"] = (float)(fb.vz);
+            status["vaf"] = (float)(fb.va);
+            status["vcf"] = (float)(fb.vc);
+            status["axf"] = (float)(fb.ax);
+            status["ayf"] = (float)(fb.ay);
+            status["azf"] = (float)(fb.az);
+            status["aaf"] = (float)(fb.aa);
+            status["acf"] = (float)(fb.ac);
             status["error"] = (float)(fb.error);
 
             agent.publish(status);
