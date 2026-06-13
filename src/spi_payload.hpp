@@ -38,9 +38,9 @@ public:
     
   nlohmann::json unpack_rx();
 
-  uint8_t* SPIPayload::get_tx_data() { return _tx_buffer.data(); }
-  uint8_t* SPIPayload::get_rx_data() { return _rx_buffer.data(); }
-  size_t SPIPayload::get_total_bytes() const { return _total_bytes; }
+  uint8_t* get_tx_data() { return _tx_buffer.data(); }
+  uint8_t* get_rx_data() { return _rx_buffer.data(); }
+  size_t get_total_bytes() const { return _total_bytes; }
 };
 
 #endif
