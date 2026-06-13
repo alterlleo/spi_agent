@@ -48,7 +48,7 @@ using namespace Mads;
     float vy;
     uint8_t check;
     uint8_t padding[66];
-  }; // tot byte dimension: 1 + 7*4 + 1 + 2 = 32
+  }; // tot byte dimension: 96
 #pragma pack(pop)
 
 #pragma pack(push, 1)
@@ -76,10 +76,6 @@ struct __attribute__((packed)) PackFb {
 };
 #pragma pack(pop)
 
-struct __attribute__((packed)) SPIFrame{
-  Pack tx;
-  PackFb rx;
-};
 
 int main(int argc, char *const *argv) {
   // Mads-related
@@ -227,9 +223,6 @@ int main(int argc, char *const *argv) {
          |_|   \__,_|_|_| |____/ \__,_| .__/|_|\___/_/\_\ |____/|_|  |___|
                                       |_|                                 
         */
-
-        SPIFrame frame = {};
-        frame.tx = pkt;
 
         struct spi_ioc_transfer tr;
         memset(&tr, 0, sizeof(tr));
