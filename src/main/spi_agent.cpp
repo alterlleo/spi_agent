@@ -25,10 +25,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stddef.h>
-#include <vector>
-#include <string>
-#include <map>
-#include <algorithm>
+#include "../spi_payload.hpp"
 
 // RT
 #include <sched.h>
@@ -142,10 +139,20 @@ int main(int argc, char *const *argv) {
 
   // Settings
   json settings = agent.get_settings();
+
   period = chrono::milliseconds(settings.value("period", 100));
   if (options_parsed.count("period") != 0) {
     period = chrono::milliseconds(options_parsed["period"].as<size_t>());
   }
+
+  vector<string> tx_vars = settings.value("mosi", vector<string>{});
+  vector<string> rx_vars = settings.value("miso", vector<string>{});
+  if(tx_vars.empty() || rx_vars.empty()){
+
+    throw runtime_error("Fill mads.ini agent's section with desired MOSI and MISO variables");
+  }
+  SPIPayload payload;
+  payload.init(tx_vars, rx_vars);
 
   // Connection
   agent.enable_remote_control();
@@ -190,36 +197,19 @@ int main(int argc, char *const *argv) {
 
         // MADS -> SPI
         if (agent.receive(false) == message_type::json && agent.last_topic() == "setpoint") {
-          
-          auto msg = agent.last_message();
-          auto in = json::parse(get<1>(msg));
+          try {
+            auto in = json::parse(get<1>(agent.last_message()));
+            if (in.contains("spi_input") && in["spi_input"].is_object()) {
+              auto spi_json = in["spi_input"];
+              
+              bool flag = spi_json.value("gflag", false);
+              uint8_t start_byte = flag ? 0xCC : 0xAA;
 
-          if (in.contains("fmu_input") && in["fmu_input"].is_object()) {
-            auto fmu = in["fmu_input"];
-            
-            pkt.x = fmu.value("x", 0.0f);
-            pkt.y = fmu.value("y", 0.0f);
-            pkt.z = fmu.value("z", 0.0f);
-            pkt.a = fmu.value("a", 0.0f);
-            pkt.c = fmu.value("c", 0.0f);
-            pkt.vx = fmu.value("vx", 0.0f);
-            pkt.vy = fmu.value("vy", 0.0f);
-
-            if(pkt.x == 0.0f && pkt.y == 0.0f && pkt.z == 0.0f && pkt.a == 0.0f && pkt.c == 0.0f){
-              pkt.start = 0xCC;
-            } else {
-              pkt.start = 0xAA;
+              payload.pack_tx(start_byte, last_id, spi_json);
             }
-
-            uint8_t checksum_tx = 0;
-            uint8_t* ptr_tx = (uint8_t*)&pkt;
-            for(size_t i = 0; i < offsetof(Pack, check); i++) {
-                checksum_tx ^= ptr_tx[i];
-            }
-            pkt.check = checksum_tx;
-
-          } else {
-            console_out[0] = to_string(t) + " s, Missing /fmu_input/";
+          } catch (const json::parse_error& e) {
+            std::cerr << "Json parsing error: " << e.what() << std::endl;
+            return 0ms;
           }
         }
 
@@ -232,44 +222,25 @@ int main(int argc, char *const *argv) {
                                       |_|                                 
         */
 
-        SPIFrame frame = {};
-        frame.tx = pkt;
-
         struct spi_ioc_transfer tr;
         memset(&tr, 0, sizeof(tr));
-        tr.tx_buf = (unsigned long)&pkt;
-        tr.rx_buf = (unsigned long)&fb;
-        tr.len = sizeof(Pack);
+        tr.tx_buf = (unsigned long)payload.get_tx_data();
+        tr.rx_buf = (unsigned long)payload.get_rx_data();
+        tr.len = payload.get_total_bytes();
         tr.speed_hz = 5000000;
         tr.bits_per_word = 8;
         
         if(ioctl(_spi, SPI_IOC_MESSAGE(1), &tr) < 0){
-            fprintf(stderr, "SPI Communication error. Attempted length: %d\n", tr.len);
-            perror("System Error");
+            perror("SPI Communication error");
         }
 
-        // SPI -> MADS
-        uint8_t checksum_rx = 0;
-        uint8_t* ptr_rx = (uint8_t*)&fb;
-        for(size_t i = 0; i < offsetof(PackFb, check); i++) {
-          checksum_rx ^= ptr_rx[i];
-        }
-
-        if (fb.start != 0xBB || fb.check != checksum_rx) {
-            cerr << "ERROR! Calc_Check: 0x" << hex << (int)checksum_rx 
-                 << " | Recv_Check: 0x" << (int)fb.check 
-                 << " | Start: 0x" << (int)fb.start << dec << endl;
-        } else {
-
-          if(fb.msg_id > last_id){
-            
-            // new data
-            last_id = fb.msg_id;
-            status["position"] = {(float)(fb.x), (float)(fb.y), (float)(fb.z), (float)(fb.a), (float)(fb.c)};
-            status["velocity"] = {(float)(fb.vx), (float)(fb.vy), (float)(fb.vz), (float)(fb.va), (float)(fb.vc)};
-            status["acceleration"] = {(float)(fb.ax), (float)(fb.ay), (float)(fb.az), (float)(fb.aa), (float)(fb.ac)};
-            status["error"] = (float)(fb.error);
-
+        json status = payload.unpack_rx();
+        
+        if (!status.empty()) {
+          uint32_t rx_msg_id = status.value("msg_id", 0);
+          
+          if (rx_msg_id > last_id) {
+            last_id = rx_msg_id;
             agent.publish(status);
           }
         }

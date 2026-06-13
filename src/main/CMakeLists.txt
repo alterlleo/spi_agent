@@ -16,7 +16,7 @@ if(WIN32)
 endif()
 
 # Agent
-add_executable(mads-spi spi_agent.cpp)
+add_executable(mads-spi spi_agent.cpp ../spi_payload.cpp)
 target_include_directories(mads-spi BEFORE PRIVATE ${CMAKE_SOURCE_DIR}/src/compat)
 target_include_directories(mads-spi PRIVATE ${cxxopts_SOURCE_DIR}/include)
 if(WIN32)
