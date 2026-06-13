@@ -25,6 +25,10 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stddef.h>
+#include <vector>
+#include <string>
+#include <map>
+#include <algorithm>
 
 // RT
 #include <sched.h>
