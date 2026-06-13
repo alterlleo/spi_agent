@@ -236,7 +236,7 @@ int main(int argc, char *const *argv) {
         tr.tx_buf = (unsigned long)&pkt;
         tr.rx_buf = (unsigned long)&fb;
         tr.len = sizeof(Pack);
-        tr.speed_hz = 1000000;
+        tr.speed_hz = 5000000;
         tr.bits_per_word = 8;
         
         if(ioctl(_spi, SPI_IOC_MESSAGE(1), &tr) < 0){
@@ -261,21 +261,9 @@ int main(int argc, char *const *argv) {
             
             // new data
             last_id = fb.msg_id;
-            status["xf"] = (float)(fb.x);
-            status["yf"] = (float)(fb.y);
-            status["zf"] = (float)(fb.z);
-            status["af"] = (float)(fb.a);
-            status["cf"] = (float)(fb.c);
-            status["vxf"] = (float)(fb.vx);
-            status["vyf"] = (float)(fb.vy);
-            status["vzf"] = (float)(fb.vz);
-            status["vaf"] = (float)(fb.va);
-            status["vcf"] = (float)(fb.vc);
-            status["axf"] = (float)(fb.ax);
-            status["ayf"] = (float)(fb.ay);
-            status["azf"] = (float)(fb.az);
-            status["aaf"] = (float)(fb.aa);
-            status["acf"] = (float)(fb.ac);
+            status["position"] = {(float)(fb.x), (float)(fb.y), (float)(fb.z), (float)(fb.a), (float)(fb.c)};
+            status["velocity"] = {(float)(fb.vx), (float)(fb.vy), (float)(fb.vz), (float)(fb.va), (float)(fb.vc)};
+            status["acceleration"] = {(float)(fb.ax), (float)(fb.ay), (float)(fb.az), (float)(fb.aa), (float)(fb.ac)};
             status["error"] = (float)(fb.error);
 
             agent.publish(status);
