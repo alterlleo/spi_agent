@@ -190,8 +190,9 @@ int main(int argc, char *const *argv) {
         if (!status.empty()) {
           uint32_t rx_msg_id = status.value("msg_id", 0);
           
-          if (rx_msg_id > last_id) {
+          if (rx_msg_id != last_id) {
             last_id = rx_msg_id;
+            status.erase("msg_id");
             agent.publish(status);
           }
         }

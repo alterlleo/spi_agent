@@ -49,7 +49,7 @@ nlohmann::json SPIPayload::unpack_rx() {
   nlohmann::json out;
   
   if (_rx_buffer[0] != 0xBB) {
-    cerr << "SPI RX starts with 0x" << _rx_buffer[0] << ". It must start with 0xBB" << endl;
+    cerr << "SPI RX starts with 0x" << hex << (int)_rx_buffer[0] << dec << ". It must start with 0xBB" << endl;
     return out;
   }
 
