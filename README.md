@@ -30,9 +30,9 @@ A few notes:
 ---
 
 ## Binary Protocol Specification
-To prevent memory padding issues across different architectures (ARM vs. MCU), all structures are forced to **1-byte alignment** using `#pragma pack(push, 1)`.
+To prevent memory padding issues across different architectures (ARM vs. MCU), all structures are forced to **1-byte alignment** using `#pragma pack(push, 1)`. Since Raspberry Pi can only be configured as Master, `MOSI` and `MISO` are defined accordingly.
 
-### TX: Raspberry Pi → Microcontroller
+### MOSI: Raspberry Pi → Microcontroller
 Sent whenever a valid JSON message is received from the MADS network.
 - **Total Size**: 26 Bytes
 - **Structure (`Pack`)**:
@@ -48,7 +48,7 @@ Sent whenever a valid JSON message is received from the MADS network.
 | 21 | `float` | `feedrate`| Target velocity (4 bytes) |
 | 25 | `uint8_t` | `check` | XOR Checksum of bytes 0-24 |
 
-### RX: Microcontroller → Raspberry Pi
+### MISO: Microcontroller → Raspberry Pi
 Read during every agent loop cycle to update the machine status.
 - **Total Size**: 22 Bytes
 - **Structure (`PackFb`)**:
