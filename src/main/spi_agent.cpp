@@ -140,6 +140,8 @@ int main(int argc, char *const *argv) {
   // Settings
   json settings = agent.get_settings();
 
+  uint32_t speed = settings.value("speed", 5000000); // by default, it is set to 5MHz
+
   period = chrono::milliseconds(settings.value("period", 100));
   if (options_parsed.count("period") != 0) {
     period = chrono::milliseconds(options_parsed["period"].as<size_t>());
@@ -169,7 +171,6 @@ int main(int argc, char *const *argv) {
 
   uint8_t mode = SPI_MODE_0;
   ioctl(_spi, SPI_IOC_WR_MODE, &mode);
-  uint32_t speed = 5000000;
   ioctl(_spi, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
 
   // loop
