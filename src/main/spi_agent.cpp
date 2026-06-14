@@ -186,8 +186,8 @@ int main(int argc, char *const *argv) {
           auto msg = agent.last_message();
           auto in = json::parse(get<1>(msg));
 
-          if (in.contains("fmu_input") && in["fmu_input"].is_object()) {
-            auto fmu = in["fmu_input"];
+          if (in.contains("spi_input") && in["spi_input"].is_object()) {
+            auto fmu = in["spi_input"];
             
             pkt.x = fmu.value("x", 0.0f);
             pkt.y = fmu.value("y", 0.0f);
@@ -211,7 +211,7 @@ int main(int argc, char *const *argv) {
             pkt.check = checksum_tx;
 
           } else {
-            console_out[0] = to_string(t) + " s, Missing /fmu_input/";
+            console_out[0] = to_string(t) + " s, Missing /spi_input/";
           }
         }
 
