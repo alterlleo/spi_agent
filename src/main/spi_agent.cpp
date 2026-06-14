@@ -36,52 +36,6 @@ using namespace cxxopts;
 using json = nlohmann::json;
 using namespace Mads;
 
-#pragma pack(push, 1) // 1 byte alignement, instead of default 4
-  struct __attribute__((packed)) Pack{
-
-    uint8_t start;
-    float x;
-    float y;
-    float z;
-    float a;
-    float c;
-    float vx;
-    float vy;
-    uint8_t check;
-    uint8_t padding[66];
-  }; // tot byte dimension: 1 + 7*4 + 1 + 2 = 32
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct __attribute__((packed)) PackFb {
-    uint8_t  start;
-    uint32_t msg_id;
-    float    x;
-    float    y;
-    float    z;
-    float    a;
-    float    c;
-    float    vx;
-    float    vy;
-    float    vz;
-    float    va;
-    float    vc;
-    float    ax;
-    float    ay;
-    float    az;
-    float    aa;
-    float    ac;
-    float    error;
-    uint8_t  check;
-    uint8_t padding[26];
-};
-#pragma pack(pop)
-
-struct __attribute__((packed)) SPIFrame{
-  Pack tx;
-  PackFb rx;
-};
-
 int main(int argc, char *const *argv) {
   // Mads-related
   string settings_uri = SETTINGS_URI;
@@ -180,10 +134,6 @@ int main(int argc, char *const *argv) {
   json status;
   array<string, 3> console_out;
 
-  Pack pkt = {};
-  PackFb fb = {};
-  pkt.start = 0xAA;
-  fb.start = 0xBB;
   uint32_t last_id = 0;
 
   agent.loop(

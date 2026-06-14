@@ -53,9 +53,9 @@ To define what data is exchanged, configure the `mosi` (Transmission) and `miso`
 
 ## Binary Protocol Specification
 
-The agent automatically calculates the size of the payload based on whichever array (`mosi` or `miso`) is larger, and pads the total size to the nearest **multiple of 32 bytes**. This ensures perfect alignment with the L1 Data Cache lines of modern microcontrollers (like the Cortex-M7), preventing memory corruption during DMA transfers.
+The agent automatically calculates the size of the payload based on whichever array (`mosi` or `miso`) is larger, and pads the total size to the nearest **multiple of 32 bytes**. This ensures perfect alignment with the L1 Data Cache lines of modern microcontrollers (like the Cortex-M7), preventing memory corruption during DMA transfers. Since Raspberry Pi can only be configured as Master, `MISO` and `MOSI` are defined accordingly.
 
-### TX Layout (Raspberry Pi → Microcontroller)
+### MOSI Layout (Raspberry Pi → Microcontroller)
 | Offset | Type | Field | Description |
 | :--- | :--- | :--- | :--- |
 | `0` | `uint8_t` | `start` | Start Byte: `0xAA` (Normal) or `0xCC` (Homing) |
@@ -65,7 +65,7 @@ The agent automatically calculates the size of the payload based on whichever ar
 | `IDX`| `uint8_t` | `check` | XOR Checksum of all previous bytes (0 to IDX-1) |
 | `...`| `uint8_t[]`| `padding`| Zeros added to reach the 32-byte multiple boundary |
 
-### RX Layout (Microcontroller → Raspberry Pi)
+### MISO Layout (Microcontroller → Raspberry Pi)
 | Offset | Type | Field | Description |
 | :--- | :--- | :--- | :--- |
 | `0` | `uint8_t` | `start` | Start Byte: `0xBB` |
