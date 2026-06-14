@@ -87,6 +87,7 @@ The `msg_id` field acts as an essential sequence counter for Real-Time systems:
 The agent listens to the subscribed topic. It expects a JSON payload containing an `spi_input` object. It also supports an optional general-purpose boolean flag. It may be usefult for example as trigger for some procedures in microcontrollers.
 
 **Example Input:**
+```
 {
   "spi_input": {
     "flag": false,
@@ -99,11 +100,13 @@ The agent listens to the subscribed topic. It expects a JSON payload containing 
     "vy": 13.0
   }
 }
+```
 
 ### Publication (Output)
 When a valid SPI transfer completes (verified by Start Byte `0xBB` and the Checksum) AND the `msg_id` is strictly greater than the last received ID, the agent unpacks the binary data and publishes a flat JSON object.
 
 **Example Output:**
+```
 {
   "x": 10.49,
   "y": 19.98,
@@ -122,6 +125,7 @@ When a valid SPI transfer completes (verified by Start Byte `0xBB` and the Check
   "ac": 0.0,
   "error": 0.02
 }
+```
 
 ---
 
