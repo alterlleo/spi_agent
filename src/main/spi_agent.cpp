@@ -153,7 +153,7 @@ int main(int argc, char *const *argv) {
             if (in.contains("spi_input") && in["spi_input"].is_object()) {
               auto spi_json = in["spi_input"];
               
-              bool flag = spi_json.value("gflag", false);
+              bool flag = spi_json.value("flag", false);
               uint8_t start_byte = flag ? 0xCC : 0xAA;
 
               payload.pack_tx(start_byte, last_id, spi_json);
