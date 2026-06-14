@@ -32,15 +32,16 @@ A few notes:
 
 ## Dynamic Configuration (`mads.ini`)
 
-To define what data is exchanged, configure the `tx_vars` (Transmission) and `rx_vars` (Reception) arrays in the agent's settings. The order of the strings in these arrays dictates the exact binary memory layout.
+To define what data is exchanged, configure the `mosi` (Transmission) and `miso` (Reception) arrays in the agent's settings. The order of the strings in these arrays dictates the exact binary memory layout.
 
 **Example `mads.ini`**:
 ```
   [spi_agent]
   sub_topic = "setpoint"
   pub_topic = "feedback"
-  tx_vars: ["x", "y", "z", "a", "c", "vx", "vy"]
-  rx_vars: ["x", "y", "z", "a", "c", "vx", "vy", "vz", "va", "vc", "ax", "ay", "az", "aa", "ac", "error"]
+  speed = 5000000 # SPI clock speed: 5Mhz in this case
+  mosi: ["x", "y", "z", "a", "c", "vx", "vy"]
+  miso: ["x", "y", "z", "a", "c", "vx", "vy", "vz", "va", "vc", "ax", "ay", "az", "aa", "ac", "error"]
 
 ```
 
@@ -52,14 +53,14 @@ To define what data is exchanged, configure the `tx_vars` (Transmission) and `rx
 
 ## Binary Protocol Specification
 
-The agent automatically calculates the size of the payload based on whichever array (`tx_vars` or `rx_vars`) is larger, and pads the total size to the nearest **multiple of 32 bytes**. This ensures perfect alignment with the L1 Data Cache lines of modern microcontrollers (like the Cortex-M7), preventing memory corruption during DMA transfers.
+The agent automatically calculates the size of the payload based on whichever array (`mosi` or `miso`) is larger, and pads the total size to the nearest **multiple of 32 bytes**. This ensures perfect alignment with the L1 Data Cache lines of modern microcontrollers (like the Cortex-M7), preventing memory corruption during DMA transfers.
 
 ### TX Layout (Raspberry Pi → Microcontroller)
 | Offset | Type | Field | Description |
 | :--- | :--- | :--- | :--- |
 | `0` | `uint8_t` | `start` | Start Byte: `0xAA` (Normal) or `0xCC` (Homing) |
 | `1` | `uint32_t`| `msg_id` | Sequence ID echo |
-| `5` | `float` | `var_1` | First variable defined in `tx_vars` |
+| `5` | `float` | `var_1` | First variable defined in `mosi` |
 | `...`| `float` | `var_N` | Subsequent variables |
 | `IDX`| `uint8_t` | `check` | XOR Checksum of all previous bytes (0 to IDX-1) |
 | `...`| `uint8_t[]`| `padding`| Zeros added to reach the 32-byte multiple boundary |
@@ -69,7 +70,7 @@ The agent automatically calculates the size of the payload based on whichever ar
 | :--- | :--- | :--- | :--- |
 | `0` | `uint8_t` | `start` | Start Byte: `0xBB` |
 | `1` | `uint32_t`| `msg_id` | Sequence ID (agent only publishes newer IDs) |
-| `5` | `float` | `var_1` | First variable defined in `rx_vars` |
+| `5` | `float` | `var_1` | First variable defined in `miso` |
 | `...`| `float` | `var_N` | Subsequent variables |
 | `IDX`| `uint8_t` | `check` | XOR Checksum of all previous bytes (0 to IDX-1) |
 | `...`| `uint8_t[]`| `padding`| Unused bytes matching the 32-byte boundary |
