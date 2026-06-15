@@ -9,6 +9,8 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
+#define STARTING_OFFSET 5
+
 using namespace std;
 
 class SPIPayload {

@@ -6,20 +6,20 @@ void SPIPayload::init(const vector<string>& tx_vars, const vector<string>& rx_va
   // Basic Layout:
   // [Byte 0]     Start byte
   // [Byte 1-4]   msg_id
-  size_t current_offset = 5;
+  size_t current_offset = STARTING_OFFSET;
 
   for(const auto& var : tx_vars) {
     _tx_offsets[var] = current_offset;
     current_offset += sizeof(float);
   }
 
-  current_offset = 5;
+  current_offset = STARTING_OFFSET;
   for(const auto& var : rx_vars) {
     _rx_offsets[var] = current_offset;
     current_offset += sizeof(float);
   }
 
-  _check_idx = 5 + (max_vars * sizeof(float));
+  _check_idx = STARTING_OFFSET + (max_vars * sizeof(float));
   size_t raw_size = _check_idx + 1;
   _total_bytes = ((raw_size + 31) / 32) * 32; // 32 byte alignment in order to avoid issues if microcontroller is using DMA
 
