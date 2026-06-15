@@ -21,20 +21,20 @@ void SPIPayload::init(const vector<string>& tx_vars, const vector<string>& rx_va
 
   _check_idx = 5 + (max_vars * sizeof(float));
   size_t raw_size = _check_idx + 1;
-  _total_bytes = ((raw_size + 31) / 32) * 32; // 32 Byte aligment for optimized memory-driven transmission
+  _total_bytes = ((raw_size + 31) / 32) * 32; // 32 byte alignment in order to avoid issues if microcontroller is using DMA
 
   _tx_buffer.resize(_total_bytes, 0);
   _rx_buffer.resize(_total_bytes, 0);
 }
 
-void SPIPayload::pack_tx(uint8_t start, uint32_t msg_id, const nlohmann::json& fmu_in) {
+void SPIPayload::pack_tx(uint8_t start, uint32_t msg_id, const nlohmann::json& input) {
   std::fill(_tx_buffer.begin(), _tx_buffer.end(), 0); // all zeros at each iteration start
   
   _tx_buffer[0] = start;
   memcpy(&_tx_buffer[1], &msg_id, sizeof(msg_id));
 
   for(const auto& [var, offset] : _tx_offsets) {
-    float val = fmu_in.value(var, 0.0f);
+    float val = input.value(var, 0.0f);
     memcpy(&_tx_buffer[offset], &val, sizeof(float)); 
   }
 
