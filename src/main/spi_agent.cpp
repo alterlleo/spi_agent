@@ -53,7 +53,7 @@ int main(int argc, char *const *argv) {
   // RT
   struct sched_param sp;
   memset(&sp, 0, sizeof(sp));
-  sp.sched_priority = 98;
+  sp.sched_priority = 50;
   if (sched_setscheduler(0, SCHED_FIFO, &sp) == -1) {
       cerr << fg::yellow << "Warning: Failed to set SCHED_FIFO. Run as root for Real-Time performance." << fg::reset << endl;
   }
