@@ -94,7 +94,7 @@ int main(int argc, char *const *argv) {
   // RT
   struct sched_param sp;
   memset(&sp, 0, sizeof(sp));
-  sp.sched_priority = 98;
+  sp.sched_priority = 50;
   if (sched_setscheduler(0, SCHED_FIFO, &sp) == -1) {
       cerr << fg::yellow << "Warning: Failed to set SCHED_FIFO. Run as root for Real-Time performance." << fg::reset << endl;
   }
@@ -105,12 +105,11 @@ int main(int argc, char *const *argv) {
   // clang-format off
   options.add_options()
     ("p,period", "Sampling period (default 100 ms)", value<size_t>())
-    ("n,name", "Agent name (default to fmu_<model name>)", value<string>())
+    ("n,name", "Agent name (default to spi_<model name>)", value<string>())
     ("i,agent-id", "Agent ID to be added to JSON frames", value<string>());
   // clang-format on
   SETUP_OPTIONS(options, Agent);
   
-  // Load FMU
   agent_name = string("spi_agent");
 
   // Create Agent
@@ -187,15 +186,15 @@ int main(int argc, char *const *argv) {
           auto in = json::parse(get<1>(msg));
 
           if (in.contains("spi_input") && in["spi_input"].is_object()) {
-            auto fmu = in["spi_input"];
+            auto input = in["spi_input"];
             
-            pkt.x = fmu.value("x", 0.0f);
-            pkt.y = fmu.value("y", 0.0f);
-            pkt.z = fmu.value("z", 0.0f);
-            pkt.a = fmu.value("a", 0.0f);
-            pkt.c = fmu.value("c", 0.0f);
-            pkt.vx = fmu.value("vx", 0.0f);
-            pkt.vy = fmu.value("vy", 0.0f);
+            pkt.x = input.value("x", 0.0f);
+            pkt.y = input.value("y", 0.0f);
+            pkt.z = input.value("z", 0.0f);
+            pkt.a = input.value("a", 0.0f);
+            pkt.c = input.value("c", 0.0f);
+            pkt.vx = input.value("vx", 0.0f);
+            pkt.vy = input.value("vy", 0.0f);
 
             if(pkt.x == 0.0f && pkt.y == 0.0f && pkt.z == 0.0f && pkt.a == 0.0f && pkt.c == 0.0f){
               pkt.start = 0xCC;
