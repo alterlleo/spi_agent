@@ -13,8 +13,6 @@ At the hardware level, an SPI bus consists of four dedicated wires:
 It is recommended when the Raspberry Pi have to communicate with a microcontroller. If the microcontroller provides a `SPI` interface, then it must be configured as `Full Duplex Slave Mode`.
 
 > **NOTE:** It can be used just on Raspberry Pi, since a classic Linux computer does not provide a `SPI` interface.
-> Simulator for PCs is still work in progress.
-
 
 ## Build
 
