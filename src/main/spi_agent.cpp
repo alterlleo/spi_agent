@@ -86,7 +86,7 @@ int main(int argc, char *const *argv) {
   string server_key_name = "broker";
   Mads::auth_verbose auth_verbose = auth_verbose::off;
   string agent_name = argv[0], agent_id;
-  chrono::milliseconds period{100};
+  chrono::milliseconds period{1};
 
   // SPI-related
   int _spi = -1;
@@ -104,7 +104,7 @@ int main(int argc, char *const *argv) {
   // if needed, add here further CLI options
   // clang-format off
   options.add_options()
-    ("p,period", "Sampling period (default 100 ms)", value<size_t>())
+    ("p,period", "Sampling period (default 1 ms)", value<size_t>())
     ("n,name", "Agent name (default to spi_<model name>)", value<string>())
     ("i,agent-id", "Agent ID to be added to JSON frames", value<string>());
   // clang-format on
@@ -133,7 +133,7 @@ int main(int argc, char *const *argv) {
 
   // Settings
   json settings = agent.get_settings();
-  period = chrono::milliseconds(settings.value("period", 100));
+  period = chrono::milliseconds(settings.value("period", 1));
   if (options_parsed.count("period") != 0) {
     period = chrono::milliseconds(options_parsed["period"].as<size_t>());
   }
@@ -153,7 +153,7 @@ int main(int argc, char *const *argv) {
 
   uint8_t mode = SPI_MODE_0;
   ioctl(_spi, SPI_IOC_WR_MODE, &mode);
-  uint32_t speed = 5000000;
+  uint32_t speed = 1000000;
   ioctl(_spi, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
 
   // loop
